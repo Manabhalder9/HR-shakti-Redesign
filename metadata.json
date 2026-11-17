@@ -1,0 +1,6 @@
+{
+  "name": "HR Shakti",
+  "description": "A professional home for the people who make work better.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
