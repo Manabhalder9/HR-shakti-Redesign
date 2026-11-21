@@ -1,0 +1,179 @@
+/* ============================================================================
+ * HRShakti — Master Design System Tokens (Preparation Foundation — Unapplied)
+ * Brand: HRShakti | Tagline: People. Knowledge. Possibilities.
+ * Note: Connected directly to ThemeContext via :root[data-theme="light"] and
+ * :root[data-theme="dark"] selectors. Phase 2 activates dark theme tokens.
+ * ============================================================================ */
+
+:root {
+  /* Brand Core */
+  --ds-color-brand-navy: #142d4e;
+  --ds-color-brand-teal: #168c83;
+
+  /* Typography */
+  --ds-font-family-primary: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --ds-font-weight-regular: 400;
+  --ds-font-weight-medium: 500;
+  --ds-font-weight-semibold: 600;
+  --ds-font-weight-bold: 700;
+
+  /* Type Scale (size / line-height) */
+  --ds-text-display-lg-size: 3rem;       /* 48px */
+  --ds-text-display-lg-line: 3.5rem;     /* 56px */
+  --ds-text-display-md-size: 2.5rem;     /* 40px */
+  --ds-text-display-md-line: 3rem;       /* 48px */
+  --ds-text-h1-size: 2rem;               /* 32px */
+  --ds-text-h1-line: 2.5rem;             /* 40px */
+  --ds-text-h2-size: 1.5rem;             /* 24px */
+  --ds-text-h2-line: 2rem;               /* 32px */
+  --ds-text-h3-size: 1.25rem;            /* 20px */
+  --ds-text-h3-line: 1.75rem;            /* 28px */
+  --ds-text-h4-size: 1rem;               /* 16px */
+  --ds-text-h4-line: 1.5rem;             /* 24px */
+  --ds-text-body-lg-size: 1rem;          /* 16px */
+  --ds-text-body-lg-line: 1.625rem;      /* 26px */
+  --ds-text-body-size: 0.875rem;         /* 14px */
+  --ds-text-body-line: 1.375rem;         /* 22px */
+  --ds-text-body-sm-size: 0.8125rem;     /* 13px */
+  --ds-text-body-sm-line: 1.25rem;       /* 20px */
+  --ds-text-label-size: 0.75rem;         /* 12px */
+  --ds-text-label-line: 1rem;            /* 16px */
+
+  /* 4px-based Spacing Scale */
+  --ds-space-4: 0.25rem;
+  --ds-space-8: 0.5rem;
+  --ds-space-12: 0.75rem;
+  --ds-space-16: 1rem;
+  --ds-space-20: 1.25rem;
+  --ds-space-24: 1.5rem;
+  --ds-space-32: 2rem;
+  --ds-space-40: 2.5rem;
+  --ds-space-48: 3rem;
+  --ds-space-64: 4rem;
+  --ds-space-80: 5rem;
+  --ds-space-96: 6rem;
+
+  /* Radius Scale */
+  --ds-radius-sm: 4px;
+  --ds-radius-md: 8px;     /* Standard button / input radius */
+  --ds-radius-lg: 12px;    /* Standard card radius */
+  --ds-radius-full: 9999px;
+
+  /* Layout Reference Metrics */
+  --ds-public-max-width: 1520px;
+  --ds-workspace-max-width: 1760px;
+  --ds-dashboard-sidebar-width: 248px;
+  --ds-dashboard-sidebar-collapsed: 76px;
+  --ds-dashboard-topbar-height: 68px;
+  --ds-dashboard-page-padding: 32px;
+
+  /* Component Sizing References */
+  --ds-control-height-md: 40px;
+  --ds-control-height-lg: 44px;
+  --ds-input-height: 44px;
+
+  /* Icon Scale (Lucide Outline) */
+  --ds-icon-sm: 16px;
+  --ds-icon-md: 18px;
+  --ds-icon-nav: 20px;
+  --ds-icon-lg: 24px;
+  --ds-icon-xl: 32px;
+}
+
+/* ============================================================================
+ * Light Theme Semantic Tokens (Default Reference)
+ * ============================================================================ */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Backgrounds & Surfaces */
+  --ds-background: #f5f7fa;
+  --ds-background-subtle: #eef2f6;
+  --ds-surface: #ffffff;
+  --ds-surface-elevated: #ffffff;
+  --ds-surface-muted: #f8fafc;
+
+  /* Text */
+  --ds-text-primary: #242b35;
+  --ds-text-secondary: #64748b;
+  --ds-text-muted: #94a3b8;
+  --ds-text-inverse: #ffffff;
+
+  /* Borders */
+  --ds-border: #e7edf2;
+  --ds-border-strong: #cbd5e1;
+
+  /* Brand & Interactive */
+  --ds-brand-primary: #142d4e;
+  --ds-brand-secondary: #168c83;
+  --ds-interactive: #168c83;
+  --ds-interactive-hover: #12756d;
+  --ds-interactive-active: #0f5f59;
+  --ds-interactive-subtle: #e8f5f4;
+  --ds-interactive-text: #11736b;
+  --ds-focus-ring: rgba(22, 140, 131, 0.35);
+
+  /* Semantic Status */
+  --ds-success: #16845b;
+  --ds-success-bg: #eaf6ef;
+  --ds-warning: #c58a28;
+  --ds-warning-bg: #fff6e5;
+  --ds-error: #d94a4a;
+  --ds-error-bg: #fdecec;
+  --ds-information: #3976b8;
+  --ds-information-bg: #edf4fc;
+
+  /* Shadows */
+  --ds-shadow-sm: 0 1px 2px rgba(20, 45, 78, 0.05);
+  --ds-shadow-md: 0 4px 12px rgba(20, 45, 78, 0.07);
+  --ds-shadow-lg: 0 12px 28px rgba(20, 45, 78, 0.1);
+}
+
+/* ============================================================================
+ * Dark Theme Semantic Tokens (Primary Rollout Target)
+ * ============================================================================ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Backgrounds & Surfaces */
+  --ds-background: #101923;
+  --ds-background-subtle: #0d151e;
+  --ds-surface: #172330;
+  --ds-surface-elevated: #1d2b39;
+  --ds-surface-muted: #131e2a;
+
+  /* Text */
+  --ds-text-primary: #f1f5f9;
+  --ds-text-secondary: #a7b3c2;
+  --ds-text-muted: #7f8d9d;
+  --ds-text-inverse: #101923;
+
+  /* Borders */
+  --ds-border: #2b3a49;
+  --ds-border-strong: #394b5e;
+
+  /* Brand & Interactive */
+  --ds-brand-primary: #142d4e;
+  --ds-brand-secondary: #168c83;
+  --ds-interactive: #168c83;
+  --ds-interactive-hover: #1aa399;
+  --ds-interactive-active: #12756d;
+  --ds-interactive-subtle: rgba(22, 140, 131, 0.16);
+  --ds-interactive-text: #2fc4b8;
+  --ds-focus-ring: rgba(47, 196, 184, 0.4);
+
+  /* Semantic Status */
+  --ds-success: #2bb67d;
+  --ds-success-bg: #132b24;
+  --ds-warning: #e0a63e;
+  --ds-warning-bg: #2b2314;
+  --ds-error: #ef6b6b;
+  --ds-error-bg: #2f191c;
+  --ds-information: #5fa0e0;
+  --ds-information-bg: #152538;
+
+  /* Shadows */
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --ds-shadow-md: 0 6px 16px rgba(0, 0, 0, 0.32);
+  --ds-shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.42);
+}

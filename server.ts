@@ -2,8 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import express, { type Request, type Response } from 'express';
-import { createServer as createViteServer } from 'vite';
-import { createInitialStore } from './server/seedData.js';
+import { createInitialStore } from './server/seedData.ts';
 
 const store = createInitialStore();
 const sessions = new Map<string, string>(); // token -> userId
@@ -549,6 +548,7 @@ async function startServer() {
   // Vite dev middleware or static production build
   const isProd = process.env.NODE_ENV === 'production';
   if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

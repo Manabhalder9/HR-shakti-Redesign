@@ -312,7 +312,7 @@ export function FeedAndDiscussionsPage({ mode = 'feed' }: { mode?: 'feed' | 'dis
                     {item.kind === 'question' && (
                       <HelpCircle
                         size={18}
-                        style={{ display: 'inline', verticalAlign: '-3px', marginRight: 7, color: 'var(--terracotta)' }}
+                        className="question-title-icon"
                       />
                     )}
                     {item.title}
@@ -325,9 +325,8 @@ export function FeedAndDiscussionsPage({ mode = 'feed' }: { mode?: 'feed' | 'dis
                   <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <button
                       type="button"
-                      className="button button-quiet"
+                      className={`button button-quiet like-button${item.likedByMe ? ' liked' : ''}`}
                       onClick={() => handleLike(item.id)}
-                      style={{ color: item.likedByMe ? 'var(--terracotta)' : 'var(--ink-soft)' }}
                     >
                       <Heart size={14} fill={item.likedByMe ? 'currentColor' : 'none'} />
                       {item.likes}
@@ -391,7 +390,7 @@ export function DiscussionDetailPage({ id }: { id: string }) {
   return (
     <WorkspaceLayout>
       <div style={{ marginBottom: 14 }}>
-        <Link href="/discussions" style={{ fontSize: '0.84rem', fontWeight: 700 }}>
+        <Link href="/discussions" className="back-link">
           ← Back to all discussions
         </Link>
       </div>
@@ -402,7 +401,7 @@ export function DiscussionDetailPage({ id }: { id: string }) {
         <EmptyState title="Conversation not found" description="This thread may have been removed." />
       ) : (
         <>
-          <article className="panel" style={{ borderTop: '3px solid var(--copper)' }}>
+          <article className="panel discussion-detail-card">
             <p className="eyebrow">{item.communityName}</p>
             <h1 style={{ fontSize: 'clamp(1.7rem, 2.8vw, 2.4rem)' }}>{item.title}</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--ink-muted)', fontSize: '0.8rem', marginBottom: 18 }}>
@@ -427,12 +426,8 @@ export function DiscussionDetailPage({ id }: { id: string }) {
                       <button
                         key={opt.id}
                         type="button"
-                        className="poll-result"
+                        className={`poll-result${chosen ? ' selected' : ''}`}
                         onClick={() => handleVote(opt.id)}
-                        style={{
-                          borderColor: chosen ? 'var(--terracotta)' : undefined,
-                          background: chosen ? 'var(--surface-copper)' : undefined,
-                        }}
                       >
                         <div className="poll-result-copy">
                           <strong>

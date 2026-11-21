@@ -85,13 +85,13 @@ export function JobsPage() {
             const isApplied = appliedIds.includes(job.id);
             const isSaved = savedIds.includes(job.id);
             return (
-              <article className="panel" key={job.id} style={{ borderTop: '3px solid var(--terracotta)' }}>
+              <article className="panel job-card" key={job.id}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
                   <div>
                     <p className="eyebrow" style={{ marginBottom: 6 }}>
                       {job.company} · {job.workMode}
                     </p>
-                    <h2 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '1.35rem', marginBottom: 6 }}>
+                    <h2 className="job-card-title">
                       {job.title}
                     </h2>
                     <p style={{ color: 'var(--ink-muted)', fontSize: '0.84rem', marginBottom: 10 }}>
@@ -192,15 +192,7 @@ export function ApplicationsPage() {
                   {app.company} · Applied {formatDate(app.appliedAt)}
                 </span>
               </div>
-              <span
-                style={{
-                  padding: '4px 10px',
-                  background: 'var(--surface-saffron)',
-                  color: 'var(--walnut)',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                }}
-              >
+              <span className="status-badge">
                 {app.status}
               </span>
             </div>
@@ -426,7 +418,7 @@ export function BlogsPage() {
                   />
                 )}
                 <div className="item-card-top">
-                  <span className="item-meta" style={{ color: 'var(--terracotta)' }}>
+                  <span className="item-meta meta-accent">
                     {post.category}
                   </span>
                   <span className="item-meta">{post.readingTime}</span>
@@ -479,7 +471,7 @@ export function BlogDetailPage({ slug }: { slug: string }) {
   return (
     <WorkspaceLayout>
       <div style={{ marginBottom: 14 }}>
-        <Link href="/blogs" style={{ fontSize: '0.84rem', fontWeight: 700 }}>
+        <Link href="/blogs" className="back-link">
           ← Back to HR Shakti Journal
         </Link>
       </div>
@@ -675,7 +667,7 @@ export function MentorshipPage() {
                 <span className="item-meta">{mentor.availability}</span>
               </div>
               <h3>{mentor.name}</h3>
-              <div style={{ fontSize: '0.78rem', color: 'var(--terracotta)', fontWeight: 700, marginBottom: 8 }}>
+              <div className="meta-accent" style={{ fontSize: '0.78rem', marginBottom: 8 }}>
                 {mentor.role}
               </div>
               <p>{mentor.bio}</p>

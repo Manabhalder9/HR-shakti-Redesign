@@ -42,6 +42,7 @@ export function GlobalSearchInput({
   const { navigate, pathname, search } = useRouter();
   const initialQ = pathname === '/search' ? new URLSearchParams(search).get('q') || '' : '';
   const [query, setQuery] = useState(initialQ);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (pathname === '/search') {
@@ -57,11 +58,11 @@ export function GlobalSearchInput({
 
   return (
     <form className={`global-search ${className}`.trim()} role="search" onSubmit={handleSubmit}>
-      <Search size={16} aria-hidden="true" />
       <label htmlFor={id} className="sr-only">
         Search HR Shakti
       </label>
       <input
+        ref={inputRef}
         id={id}
         type="search"
         value={query}
@@ -69,10 +70,26 @@ export function GlobalSearchInput({
         placeholder="Search people, jobs, discussions…"
       />
       {query && (
-        <button type="button" aria-label="Clear search" onClick={() => setQuery('')}>
+        <button
+          type="button"
+          className="global-search-clear"
+          aria-label="Clear search"
+          onClick={() => {
+            setQuery('');
+            inputRef.current?.focus();
+          }}
+        >
           <X size={14} aria-hidden="true" />
         </button>
       )}
+      <button
+        type="submit"
+        className="global-search-submit"
+        aria-label="Search HR Shakti"
+        title="Search"
+      >
+        <Search size={15} aria-hidden="true" />
+      </button>
     </form>
   );
 }

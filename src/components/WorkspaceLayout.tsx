@@ -1,96 +1,358 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ArrowRight,
-  Award,
   Bell,
-  Bookmark,
   Calendar,
   CheckSquare,
-  ClipboardList,
-  Compass,
-  HelpCircle,
-  LayoutDashboard,
+  ChevronDown,
+  ChevronRight,
+  LifeBuoy,
   Menu,
   MessageSquare,
-  Settings,
-  User,
-  Users,
+  MessagesSquare,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
   X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { isRouteActive, Link, useRouter } from '../context/RouterContext';
-import { WORKSPACE_RAIL_LINKS } from '../data/navigation';
-import { BrandWordmark } from './BrandMark';
+import { api } from '../lib/api';
 import {
-  AccountMenu,
-  DiscoveryNav,
-  GlobalSearchInput,
-  ThemeToggleButton,
-} from './NavigationControls';
+  isWorkspaceGroupActive,
+  isWorkspaceItemActive,
+  resolveWorkspacePageMeta,
+  WORKSPACE_NAV_GROUPS,
+} from '../data/workspaceNavigation';
+import { BrandSymbol } from './BrandMark';
+import { AccountMenu, GlobalSearchInput, ThemeToggleButton } from './NavigationControls';
+import { renderWorkspaceIcon, WorkspaceContextRail } from './WorkspaceContextRail';
 
-const RAIL_ICONS: Record<string, React.ReactNode> = {
-  '/calendar': <Calendar size={17} aria-hidden="true" />,
-  '/tasks': <CheckSquare size={17} aria-hidden="true" />,
-  '/support': <HelpCircle size={17} aria-hidden="true" />,
-  '/surveys': <ClipboardList size={17} aria-hidden="true" />,
-  '/certificates': <Award size={17} aria-hidden="true" />,
-  '/network': <Users size={17} aria-hidden="true" />,
-};
+const SIDEBAR_GROUPS_STORAGE_KEY = 'hrshakti_sidebar_groups_v1';
+const SIDEBAR_COLLAPSED_STORAGE_KEY = 'hrshakti_sidebar_collapsed_v1';
 
-export function WorkspaceLayout({ children }: { children: React.ReactNode }) {
+function buildInitialGroupState(activeGroupId: string): Record<string, boolean> {
+  const defaults: Record<string, boolean> = {};
+  for (const group of WORKSPACE_NAV_GROUPS) {
+    defaults[group.id] = Boolean(group.defaultOpen) || group.id === activeGroupId;
+  }
+  try {
+    const raw = window.localStorage.getItem(SIDEBAR_GROUPS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Record<string, boolean>;
+      return { ...defaults, ...parsed, [activeGroupId]: true };
+    }
+  } catch {
+    // Ignore storage read errors in restricted environments
+  }
+  return defaults;
+}
+
+function readInitialCollapsedState(): boolean {
+  try {
+    return window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export interface WorkspaceLayoutProps {
+  children: React.ReactNode;
+  contextPanel?: React.ReactNode;
+  hideContextRail?: boolean;
+  wide?: boolean;
+}
+
+export function WorkspaceLayout({
+  children,
+  contextPanel,
+  hideContextRail = false,
+  wide = false,
+}: WorkspaceLayoutProps) {
   const { user } = useAuth();
   const { pathname } = useRouter();
+  const pageMeta = useMemo(() => resolveWorkspacePageMeta(pathname), [pathname]);
+
   const [menuOpen, setMenuOpen] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(readInitialCollapsedState);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    buildInitialGroupState(pageMeta.groupId)
+  );
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  const quickAddRef = useRef<HTMLDivElement>(null);
+
+  // Always ensure the active route's sidebar group is expanded
+  useEffect(() => {
+    setOpenGroups((prev) => {
+      if (prev[pageMeta.groupId]) return prev;
+      const next = { ...prev, [pageMeta.groupId]: true };
+      try {
+        window.localStorage.setItem(SIDEBAR_GROUPS_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // Ignore storage write errors
+      }
+      return next;
+    });
+    setMenuOpen(false);
+    setQuickAddOpen(false);
+  }, [pathname, pageMeta.groupId]);
+
+  // Close Quick Actions menu on outside click or Escape
+  useEffect(() => {
+    if (!quickAddOpen) return;
+    const onMouseDown = (e: MouseEvent) => {
+      if (!quickAddRef.current?.contains(e.target as Node)) {
+        setQuickAddOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setQuickAddOpen(false);
+    };
+    window.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [quickAddOpen]);
+
+  // Lightly sync real unread counts for signed-in members from existing Express endpoints
+  useEffect(() => {
+    if (!user) {
+      setUnreadNotifications(0);
+      setUnreadMessages(0);
+      return;
+    }
+    let active = true;
+    Promise.all([
+      api.get<{ items: Array<{ read?: boolean }> }>('/notifications').catch(() => ({ items: [] })),
+      api
+        .get<{ items: Array<{ unread?: number }> }>('/messages/conversations')
+        .catch(() => ({ items: [] })),
+    ]).then(([notifs, convs]) => {
+      if (!active) return;
+      setUnreadNotifications(notifs.items.filter((n) => !n.read).length);
+      setUnreadMessages(convs.items.reduce((sum, c) => sum + (c.unread || 0), 0));
+    });
+    return () => {
+      active = false;
+    };
+  }, [user, pathname]);
+
+  const toggleGroup = (groupId: string) => {
+    setOpenGroups((prev) => {
+      const next = { ...prev, [groupId]: !prev[groupId] };
+      try {
+        window.localStorage.setItem(SIDEBAR_GROUPS_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // Ignore storage write errors
+      }
+      return next;
+    });
+  };
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(next));
+      } catch {
+        // Ignore storage write errors
+      }
+      return next;
+    });
+  };
+
+  const allGroupsExpanded = WORKSPACE_NAV_GROUPS.every((g) => Boolean(openGroups[g.id]));
+
+  const handleToggleAllGroups = () => {
+    const nextState: Record<string, boolean> = {};
+    const targetOpen = !allGroupsExpanded;
+    for (const g of WORKSPACE_NAV_GROUPS) {
+      nextState[g.id] = targetOpen || g.id === pageMeta.groupId;
+    }
+    setOpenGroups(nextState);
+    try {
+      window.localStorage.setItem(SIDEBAR_GROUPS_STORAGE_KEY, JSON.stringify(nextState));
+    } catch {
+      // Ignore storage write errors
+    }
+  };
+
+  const handleCollapsedGroupClick = (groupId: string) => {
+    setSidebarCollapsed(false);
+    const nextGroups = { ...openGroups, [groupId]: true };
+    setOpenGroups(nextGroups);
+    try {
+      window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, 'false');
+      window.localStorage.setItem(SIDEBAR_GROUPS_STORAGE_KEY, JSON.stringify(nextGroups));
+    } catch {
+      // Ignore storage write errors
+    }
+  };
+
+  const showContextRail =
+    !hideContextRail && !wide && (Boolean(contextPanel) || pageMeta.contextMode !== 'none');
+
+  const gridClasses = [
+    'workspace-grid',
+    sidebarCollapsed ? 'workspace-grid--collapsed' : '',
+    showContextRail ? 'workspace-grid--with-context' : 'workspace-grid--wide',
+    menuOpen ? 'menu-open' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div className="workspace">
       <header className="app-header">
-        <div className="app-brand">
-          <BrandWordmark compact />
-          <span>
-            HR <b>SHAKTI</b>
-          </span>
+        <div className="app-header-left">
+          <button
+            type="button"
+            className="icon-button mobile-menu"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+
+          <Link
+            href={user ? '/dashboard' : '/'}
+            className="app-brand"
+            aria-label="HRShakti workspace home"
+          >
+            <BrandSymbol size={30} />
+            <span className="app-brand-name">
+              HR <b>SHAKTI</b>
+            </span>
+          </Link>
+
+          <span className="app-header-divider" aria-hidden="true" />
+
+          <nav className="app-breadcrumb" aria-label="Current location">
+            <span className="app-breadcrumb-group">{pageMeta.groupLabel}</span>
+            <ChevronRight size={13} className="app-breadcrumb-sep" aria-hidden="true" />
+            <span className="app-breadcrumb-current" aria-current="page">
+              {pageMeta.title}
+            </span>
+          </nav>
         </div>
 
-        <button
-          type="button"
-          className="icon-button mobile-menu"
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={menuOpen}
-        >
-          {menuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
-
-        <DiscoveryNav />
-        <GlobalSearchInput id="workspace-search" className="workspace-search" />
+        <div className="app-header-center">
+          <GlobalSearchInput id="workspace-search" className="workspace-search" />
+        </div>
 
         <div className="app-header-actions">
-          <ThemeToggleButton />
-          <Link href="/messages" className="icon-button" aria-label="Messages">
+          <div className="quick-add-menu" ref={quickAddRef}>
+            <button
+              type="button"
+              className="quick-add-trigger"
+              aria-expanded={quickAddOpen}
+              aria-haspopup="menu"
+              onClick={() => setQuickAddOpen((v) => !v)}
+            >
+              <Plus size={15} aria-hidden="true" />
+              <span>Quick add</span>
+              <ChevronDown size={13} aria-hidden="true" />
+            </button>
+
+            {quickAddOpen && (
+              <div className="quick-add-popover" role="menu" aria-label="Quick create actions">
+                <div className="quick-add-heading">Create or jump to</div>
+                <Link href="/discussions" role="menuitem" onClick={() => setQuickAddOpen(false)}>
+                  <MessagesSquare size={15} aria-hidden="true" />
+                  <span>
+                    <strong>Start a discussion</strong>
+                    <small>Share a question or peer update</small>
+                  </span>
+                </Link>
+                <Link href="/tasks" role="menuitem" onClick={() => setQuickAddOpen(false)}>
+                  <CheckSquare size={15} aria-hidden="true" />
+                  <span>
+                    <strong>Add a task</strong>
+                    <small>Track a people ops deliverable</small>
+                  </span>
+                </Link>
+                <Link href="/calendar" role="menuitem" onClick={() => setQuickAddOpen(false)}>
+                  <Calendar size={15} aria-hidden="true" />
+                  <span>
+                    <strong>Schedule event</strong>
+                    <small>Add an entry to My Calendar</small>
+                  </span>
+                </Link>
+                <Link href="/support" role="menuitem" onClick={() => setQuickAddOpen(false)}>
+                  <LifeBuoy size={15} aria-hidden="true" />
+                  <span>
+                    <strong>Help Desk request</strong>
+                    <small>Contact HRShakti member support</small>
+                  </span>
+                </Link>
+              </div>
+            )}
+          </div>
+
+          <Link
+            href="/messages"
+            className={`icon-button header-utility-btn${isRouteActive(pathname, '/messages') ? ' active' : ''}`}
+            aria-label={unreadMessages > 0 ? `Messages (${unreadMessages} unread)` : 'Messages'}
+            title="Messages"
+          >
             <MessageSquare size={18} aria-hidden="true" />
+            {unreadMessages > 0 && (
+              <span className="header-icon-count" aria-hidden="true">
+                {unreadMessages > 9 ? '9+' : unreadMessages}
+              </span>
+            )}
           </Link>
-          <Link href="/notifications" className="icon-button" aria-label="Notifications">
+
+          <Link
+            href="/notifications"
+            className={`icon-button header-utility-btn${isRouteActive(pathname, '/notifications') ? ' active' : ''}`}
+            aria-label={
+              unreadNotifications > 0 ? `Notifications (${unreadNotifications} unread)` : 'Notifications'
+            }
+            title="Notifications"
+          >
             <Bell size={18} aria-hidden="true" />
+            {unreadNotifications > 0 && (
+              <span className="header-icon-count" aria-hidden="true">
+                {unreadNotifications > 9 ? '9+' : unreadNotifications}
+              </span>
+            )}
           </Link>
+
+          <ThemeToggleButton />
+
+          <span className="app-header-actions-sep" aria-hidden="true" />
+
           {user ? (
             <AccountMenu />
           ) : (
-            <Link href="/login" className="button button-secondary" style={{ minHeight: 38, padding: '0 13px' }}>
+            <Link href="/login" className="button button-secondary app-signin-btn">
               Sign in
             </Link>
           )}
         </div>
       </header>
 
-      <div className={`workspace-grid${menuOpen ? ' menu-open' : ''}`}>
+      <div className={gridClasses}>
         {menuOpen && (
-          <div className="side-rail-backdrop" aria-hidden="true" onMouseDown={() => setMenuOpen(false)} />
+          <div
+            className="side-rail-backdrop"
+            aria-hidden="true"
+            onMouseDown={() => setMenuOpen(false)}
+          />
         )}
 
-        <aside className="side-rail" aria-label="Workspace navigation">
+        <aside
+          className={`side-rail${sidebarCollapsed ? ' side-rail--collapsed' : ''}`}
+          aria-label="Workspace navigation"
+        >
           <div className="mobile-rail-heading">
-            <strong>Explore HR Shakti</strong>
+            <strong>HRShakti Workspace</strong>
             <button
               type="button"
               className="icon-button"
@@ -101,164 +363,125 @@ export function WorkspaceLayout({ children }: { children: React.ReactNode }) {
             </button>
           </div>
 
-          <div className="rail-label">{user ? 'Your space' : 'Explore HR Shakti'}</div>
-
-          {user && (
-            <Link
-              href="/dashboard"
-              className={`rail-link${isRouteActive(pathname, '/dashboard') ? ' active' : ''}`}
-              onClick={() => setMenuOpen(false)}
+          <div className="rail-desktop-header">
+            {!sidebarCollapsed && <span className="rail-header-title">Workspace</span>}
+            <button
+              type="button"
+              className="rail-collapse-btn"
+              onClick={toggleSidebarCollapsed}
+              aria-label={sidebarCollapsed ? 'Expand sidebar navigation' : 'Collapse sidebar navigation'}
+              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              <LayoutDashboard size={17} aria-hidden="true" />
-              <span>Dashboard</span>
-            </Link>
+              {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+            </button>
+          </div>
+
+          {sidebarCollapsed ? (
+            <nav className="rail-collapsed-nav" aria-label="Collapsed workspace sections">
+              <Link
+                href="/dashboard"
+                className={`rail-icon-link${isRouteActive(pathname, '/dashboard') ? ' active' : ''}`}
+                aria-label="Dashboard"
+                title="Dashboard"
+              >
+                {renderWorkspaceIcon('dashboard', 18)}
+              </Link>
+              <div className="rail-collapsed-divider" />
+              {WORKSPACE_NAV_GROUPS.filter((g) => g.id !== 'overview').map((group) => {
+                const groupActive = isWorkspaceGroupActive(pathname, group);
+                return (
+                  <button
+                    key={group.id}
+                    type="button"
+                    className={`rail-icon-link${groupActive ? ' active' : ''}`}
+                    onClick={() => handleCollapsedGroupClick(group.id)}
+                    aria-label={`Open ${group.label}`}
+                    title={group.label}
+                  >
+                    {renderWorkspaceIcon(group.icon, 18)}
+                  </button>
+                );
+              })}
+            </nav>
+          ) : (
+            <>
+              <nav className="rail-nav-scroll" aria-label="Workspace sections">
+                {WORKSPACE_NAV_GROUPS.map((group) => {
+                  const isOpen = Boolean(openGroups[group.id]);
+                  const hasActiveChild = isWorkspaceGroupActive(pathname, group);
+                  const sectionPanelId = `rail-group-${group.id}`;
+
+                  return (
+                    <section className="rail-group" key={group.id}>
+                      <button
+                        type="button"
+                        className={`rail-group-trigger${hasActiveChild ? ' has-active' : ''}`}
+                        aria-expanded={isOpen}
+                        aria-controls={sectionPanelId}
+                        onClick={() => toggleGroup(group.id)}
+                      >
+                        <span className="rail-group-label">{group.label}</span>
+                        <span className="rail-group-meta">
+                          <span className="rail-group-count">{group.items.length}</span>
+                          <ChevronDown
+                            size={14}
+                            className={`rail-group-chevron${isOpen ? ' open' : ''}`}
+                            aria-hidden="true"
+                          />
+                        </span>
+                      </button>
+
+                      {isOpen && (
+                        <div className="rail-group-items" id={sectionPanelId}>
+                          {group.items.map((item) => {
+                            const active = isWorkspaceItemActive(pathname, item);
+                            return (
+                              <Link
+                                key={item.id}
+                                href={item.href}
+                                className={`rail-link${active ? ' active' : ''}`}
+                                aria-current={active ? 'page' : undefined}
+                                onClick={() => setMenuOpen(false)}
+                              >
+                                {renderWorkspaceIcon(item.icon, 16)}
+                                <span className="rail-link-label">{item.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </section>
+                  );
+                })}
+              </nav>
+
+              <div className="rail-footer">
+                <button
+                  type="button"
+                  className="rail-footer-action"
+                  onClick={handleToggleAllGroups}
+                >
+                  {allGroupsExpanded ? 'Collapse inactive groups' : 'Expand all groups'}
+                </button>
+              </div>
+            </>
           )}
-
-          <Link
-            href="/feed"
-            className={`rail-link${isRouteActive(pathname, '/feed') ? ' active' : ''}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            <Compass size={17} aria-hidden="true" />
-            <span>Community feed</span>
-          </Link>
-
-          <div className="rail-divider" />
-          <div className="rail-label">Discover</div>
-          <Link
-            href="/discussions"
-            className={`rail-link${isRouteActive(pathname, '/discussions') ? ' active' : ''}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            <span>Discussions</span>
-          </Link>
-          <Link
-            href="/questions"
-            className={`rail-link${isRouteActive(pathname, '/questions') ? ' active' : ''}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            <span>Questions & answers</span>
-          </Link>
-          <Link
-            href="/communities"
-            className={`rail-link${isRouteActive(pathname, '/communities') ? ' active' : ''}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            <span>Communities</span>
-          </Link>
-          <Link
-            href="/jobs"
-            className={`rail-link${isRouteActive(pathname, '/jobs') ? ' active' : ''}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            <span>Open roles</span>
-          </Link>
-          <Link
-            href="/learning"
-            className={`rail-link${isRouteActive(pathname, '/learning') ? ' active' : ''}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            <span>Learning library</span>
-          </Link>
-          <Link
-            href="/events"
-            className={`rail-link${isRouteActive(pathname, '/events') ? ' active' : ''}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            <span>Events</span>
-          </Link>
-          <Link
-            href="/blogs"
-            className={`rail-link${isRouteActive(pathname, '/blogs') ? ' active' : ''}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            <span>HR Shakti Journal</span>
-          </Link>
-
-          <div className="rail-divider" />
-          <div className="rail-label">Your work</div>
-          {WORKSPACE_RAIL_LINKS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`rail-link${isRouteActive(pathname, item.href) ? ' active' : ''}`}
-              onClick={() => setMenuOpen(false)}
-            >
-              {RAIL_ICONS[item.href]}
-              <span>{item.label}</span>
-            </Link>
-          ))}
-
-          <div className="rail-divider" />
-          <div className="rail-label">Your account</div>
-          <Link
-            href="/profile"
-            className={`rail-link${isRouteActive(pathname, '/profile') ? ' active' : ''}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            <User size={17} aria-hidden="true" />
-            <span>My profile</span>
-          </Link>
-          <Link
-            href="/saved"
-            className={`rail-link${isRouteActive(pathname, '/saved') ? ' active' : ''}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            <Bookmark size={17} aria-hidden="true" />
-            <span>Saved items</span>
-          </Link>
-          <Link
-            href="/settings"
-            className={`rail-link${isRouteActive(pathname, '/settings') ? ' active' : ''}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            <Settings size={17} aria-hidden="true" />
-            <span>Settings</span>
-          </Link>
         </aside>
 
-        <main style={{ minWidth: 0 }}>{children}</main>
-
-        <aside className="context-rail" aria-label="Community highlights">
-          <div className="context-card panel">
-            <p className="eyebrow">PEER PRACTICE</p>
-            <h2>Build better workplaces together.</h2>
-            <p>
-              {user
-                ? 'Share a live dilemma with HR peers, save field notes, or join an upcoming roundtable.'
-                : 'Sign in with one click as a demo member to post discussions, save articles, and manage tasks.'}
-            </p>
-            <Link href={user ? '/discussions' : '/login'}>
-              {user ? 'Start a discussion' : 'Sign in to workspace'} <ArrowRight size={14} />
-            </Link>
+        <main className="workspace-main">
+          <div className={`workspace-content${showContextRail ? '' : ' workspace-content--wide'}`}>
+            {children}
           </div>
+        </main>
 
-          <div className="panel context-links">
-            <div className="rail-label">Quick destinations</div>
-            <Link href="/news">
-              <Compass size={15} /> People & Work Briefing
-            </Link>
-            <Link href="/mentorship">
-              <Users size={15} /> Find a mentor
-            </Link>
-            <Link href="/career">
-              <Award size={15} /> Explore career paths
-            </Link>
-            <Link href="/applications">
-              <ClipboardList size={15} /> My applications
-            </Link>
-            <Link href="/my-events">
-              <Calendar size={15} /> My registered events
-            </Link>
-          </div>
-
-          <div className="context-legal">
-            <Link href="/about">About</Link>
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/terms">Terms</Link>
-            <Link href="/contact">Contact</Link>
-          </div>
-        </aside>
+        {showContextRail && (
+          <WorkspaceContextRail
+            mode={pageMeta.contextMode === 'none' ? 'overview' : pageMeta.contextMode}
+            pageTitle={pageMeta.title}
+            user={user}
+            customContent={contextPanel}
+          />
+        )}
       </div>
     </div>
   );
@@ -277,10 +500,8 @@ export function PageHeader({
 }) {
   return (
     <div className="page-title">
-      <div>
-        <p className="eyebrow">
-          <span className="eyebrow-dot" /> {eyebrow}
-        </p>
+      <div className="page-title-copy">
+        <p className="page-eyebrow">{eyebrow}</p>
         <h1>{title}</h1>
         <p className="page-description">{description}</p>
       </div>

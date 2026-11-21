@@ -9,6 +9,7 @@ import {
   Users,
 } from 'lucide-react';
 import { Link } from '../context/RouterContext';
+import { useTheme } from '../context/ThemeContext';
 import { api, excerptText, formatDate } from '../lib/api';
 import { PublicLayout } from '../components/PublicLayout';
 
@@ -21,6 +22,7 @@ interface StatsData {
 }
 
 export function HomePage() {
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [news, setNews] = useState<any[]>([]);
   const [stats, setStats] = useState<StatsData | null>(null);
@@ -99,11 +101,36 @@ export function HomePage() {
           </div>
         </div>
 
-        <div className="hero-visual">
+        <div className="hero-visual" data-active-theme={theme}>
           <img
-            src="/src/assets/images/hr_shakti_hero_1794889486817.jpg"
-            alt="HR and people leaders collaborating around a sunlit studio table"
+            src="/assets/aistudio/Light_Theme_Hero_Image_31a45a5e.png"
+            alt={
+              theme === 'light'
+                ? 'HR Shakti platform interface preview showing HR dashboard analytics, active vacancies, talent matrix, and AI advisor in light mode'
+                : ''
+            }
+            aria-hidden={theme !== 'light'}
+            className="hero-image hero-image-light"
+            width={2752}
+            height={1536}
             loading="eager"
+            decoding={theme === 'light' ? 'sync' : 'async'}
+            fetchPriority={theme === 'light' ? 'high' : 'low'}
+          />
+          <img
+            src="/assets/aistudio/Dark_Theme_Hero_Image_3f99ee77.png"
+            alt={
+              theme === 'dark'
+                ? 'HR Shakti platform interface preview showing HR dashboard analytics, active vacancies, talent matrix, and AI advisor in dark mode'
+                : ''
+            }
+            aria-hidden={theme !== 'dark'}
+            className="hero-image hero-image-dark"
+            width={2752}
+            height={1536}
+            loading="eager"
+            decoding={theme === 'dark' ? 'sync' : 'async'}
+            fetchPriority={theme === 'dark' ? 'high' : 'low'}
           />
         </div>
       </section>

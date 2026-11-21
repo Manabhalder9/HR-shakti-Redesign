@@ -202,7 +202,7 @@ export function RegisterPage() {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="form-grid-2">
               <div className="form-field">
                 <label htmlFor="reg-title">Role / Title</label>
                 <input

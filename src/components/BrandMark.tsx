@@ -41,23 +41,20 @@ export function BrandWordmark({
     );
   }
 
-  const textColor = theme === 'dark' ? '#fffaf3' : 'var(--ink)';
-  const accentColor = theme === 'dark' ? '#f0c789' : 'var(--terracotta)';
+  const textClass =
+    theme === 'dark'
+      ? 'brand-wordmark-text brand-wordmark-text--on-dark'
+      : 'brand-wordmark-text';
+  const accentClass =
+    theme === 'dark'
+      ? 'brand-wordmark-accent brand-wordmark-accent--on-dark'
+      : 'brand-wordmark-accent';
 
   return (
     <Link href="/" className="brand" aria-label="HR Shakti home">
       <BrandSymbol size={34} />
-      <span
-        style={{
-          fontFamily: '"Fraunces", Georgia, serif',
-          fontSize: '1.16rem',
-          fontWeight: 600,
-          letterSpacing: '0.04em',
-          color: textColor,
-          whiteSpace: 'nowrap',
-        }}
-      >
-        HR <b style={{ color: accentColor, fontWeight: 700 }}>SHAKTI</b>
+      <span className={textClass}>
+        HR <b className={accentClass}>SHAKTI</b>
       </span>
     </Link>
   );

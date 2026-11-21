@@ -19,6 +19,7 @@ import {
   DiscussionDetailPage,
   FeedAndDiscussionsPage,
 } from './pages/CommunityPages';
+import { WorkspaceModuleShellPage } from './components/WorkspaceModuleShellPage';
 import { HomePage } from './pages/HomePage';
 import {
   CalendarPage,
@@ -83,6 +84,15 @@ function AppRoutes() {
   if (cleanPath === '/surveys') return <SupportSurveysCredentialsPage view="surveys" />;
   if (cleanPath === '/certificates') return <SupportSurveysCredentialsPage view="certificates" />;
   if (cleanPath === '/search') return <SearchPage />;
+
+  if (cleanPath === '/files') return <WorkspaceModuleShellPage moduleKey="files" />;
+  if (cleanPath === '/my-learning') return <WorkspaceModuleShellPage moduleKey="my-learning" />;
+  if (cleanPath === '/templates') return <WorkspaceModuleShellPage moduleKey="templates" />;
+  if (cleanPath === '/toolkit') return <WorkspaceModuleShellPage moduleKey="toolkit" />;
+  if (cleanPath === '/compliance') return <WorkspaceModuleShellPage moduleKey="compliance" />;
+  if (cleanPath === '/benchmarks') return <WorkspaceModuleShellPage moduleKey="benchmarks" />;
+  if (cleanPath === '/reports') return <WorkspaceModuleShellPage moduleKey="reports" />;
+  if (cleanPath === '/ai-assistant') return <WorkspaceModuleShellPage moduleKey="ai-assistant" />;
 
   if (cleanPath === '/about') return <StaticPublicPage page="about" />;
   if (cleanPath === '/contact') return <StaticPublicPage page="contact" />;

@@ -1,18 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
   Award,
   Bookmark,
+  BookOpen,
+  Briefcase,
   Calendar,
   Check,
   CheckSquare,
+  FileText,
   HelpCircle,
   MessageSquare,
   Plus,
+  RotateCcw,
+  Search,
   Send,
   Trash2,
   UserCheck,
   UserPlus,
+  Users,
+  X,
 } from 'lucide-react';
 import { PublicLayout } from '../components/PublicLayout';
 import {
@@ -26,145 +33,7 @@ import { Link, useRouter } from '../context/RouterContext';
 import { useTheme } from '../context/ThemeContext';
 import { api, formatDate } from '../lib/api';
 
-export function DashboardPage() {
-  const { user, signInDemo } = useAuth();
-  const [discussions, setDiscussions] = useState<any[]>([]);
-  const [jobs, setJobs] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
-  const [tasks, setTasks] = useState<any[]>([]);
-
-  useEffect(() => {
-    Promise.all([
-      api.get('/discussions?limit=4'),
-      api.get('/jobs?limit=3'),
-      api.get('/events/my-registrations'),
-      api.get('/tasks'),
-    ]).then(([d, j, ev, t]) => {
-      setDiscussions(d.items || []);
-      setJobs(j.items || []);
-      setEvents(ev.items || []);
-      setTasks(t.items || []);
-    });
-  }, []);
-
-  if (!user) {
-    return (
-      <WorkspaceLayout>
-        <PageHeader
-          eyebrow="YOUR HR SHAKTI"
-          title="Your professional home"
-          description="Sign in to view your personalized dashboard, saved conversations, tasks, and registrations."
-        />
-        <div className="panel" style={{ maxWidth: 560 }}>
-          <h2>Explore the member workspace</h2>
-          <p style={{ color: 'var(--ink-soft)' }}>
-            Sign in with your account or launch the pre-populated demo member profile (Priya Nair, Head
-            of People Operations).
-          </p>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <button type="button" className="button button-primary" onClick={() => signInDemo()}>
-              Continue as Demo Member
-            </button>
-            <Link href="/login" className="button button-secondary">
-              Go to sign in
-            </Link>
-          </div>
-        </div>
-      </WorkspaceLayout>
-    );
-  }
-
-  return (
-    <WorkspaceLayout>
-      <PageHeader
-        eyebrow="YOUR HR SHAKTI"
-        title="Your professional home"
-        description="A personal view of the people, opportunities, and ideas you care about."
-        action={
-          <Link href="/" className="button button-secondary">
-            Go to homepage <ArrowRight size={15} />
-          </Link>
-        }
-      />
-
-      <div className="panel dashboard-welcome">
-        <div className="avatar avatar-large">{user.avatarInitials}</div>
-        <div style={{ flex: 1 }}>
-          <p className="eyebrow" style={{ marginBottom: 4 }}>
-            WELCOME BACK
-          </p>
-          <h2>{user.name}</h2>
-          <p>
-            {user.title} · {user.organization}. Keep your profile current, follow useful
-            conversations, and make your next move when you are ready.
-          </p>
-        </div>
-        <Link href="/profile" className="button button-secondary">
-          Edit profile
-        </Link>
-      </div>
-
-      <div className="calendar-overview">
-        <div className="panel">
-          <span>Open tasks</span>
-          <strong>{tasks.filter((t) => !t.done).length}</strong>
-        </div>
-        <div className="panel">
-          <span>Registered events</span>
-          <strong>{events.length}</strong>
-        </div>
-        <div className="panel">
-          <span>Active discussions</span>
-          <strong>{discussions.length}</strong>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: 16 }}>
-        <div className="panel">
-          <div className="section-title" style={{ marginTop: 0 }}>
-            <h2>Recent conversations</h2>
-            <Link href="/discussions">
-              All <ArrowRight size={14} />
-            </Link>
-          </div>
-          <div className="dashboard-records">
-            {discussions.slice(0, 4).map((d) => (
-              <Link key={d.id} href={`/discussions/${d.id}`}>
-                <div>
-                  <strong>{d.title}</strong>
-                  <span>{d.communityName}</span>
-                </div>
-                <em>{d.commentCount} replies</em>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="section-title" style={{ marginTop: 0 }}>
-            <h2>Published open roles</h2>
-            <Link href="/jobs">
-              All <ArrowRight size={14} />
-            </Link>
-          </div>
-          <div className="dashboard-records">
-            {jobs.slice(0, 3).map((j) => (
-              <Link key={j.id} href="/jobs">
-                <div>
-                  <strong>{j.title}</strong>
-                  <span>
-                    {j.company} · {j.location}
-                  </span>
-                </div>
-                <em>{j.workMode}</em>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-    </WorkspaceLayout>
-  );
-}
+export { DashboardOverviewPage as DashboardPage } from './DashboardOverviewPage';
 
 export function PeopleAndNetworkPage({ networkOnly = false }: { networkOnly?: boolean }) {
   const [people, setPeople] = useState<any[]>([]);
@@ -202,7 +71,7 @@ export function PeopleAndNetworkPage({ networkOnly = false }: { networkOnly?: bo
                 <span className="item-meta">{p.location}</span>
               </div>
               <h3>{p.name}</h3>
-              <div style={{ fontSize: '0.78rem', color: 'var(--terracotta)', fontWeight: 700, marginBottom: 6 }}>
+              <div className="meta-accent" style={{ fontSize: '0.78rem', marginBottom: 6 }}>
                 {p.title} · {p.organization}
               </div>
               <p>{p.bio}</p>
@@ -265,7 +134,7 @@ export function CalendarPage() {
 
       <div className="panel" style={{ marginBottom: 18 }}>
         <h2 style={{ marginBottom: 14 }}>Add calendar entry</h2>
-        <form onSubmit={addEvent} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <form onSubmit={addEvent} className="form-grid-2">
           <div className="form-field">
             <label htmlFor="cal-title">Title</label>
             <input id="cal-title" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Calibration sync…" />
@@ -385,7 +254,7 @@ export function TasksPage() {
         </form>
       </div>
 
-      <div className="panel" style={{ padding: 0 }}>
+      <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
         {tasks.map((t) => (
           <div
             key={t.id}
@@ -403,7 +272,7 @@ export function TasksPage() {
               onClick={() => toggleDone(t)}
               aria-label={t.done ? 'Mark incomplete' : 'Mark complete'}
             >
-              <CheckSquare size={18} color={t.done ? 'var(--terracotta)' : 'var(--ink-muted)'} />
+              <CheckSquare size={18} className={`task-check-icon${t.done ? ' done' : ''}`} />
             </button>
             <div style={{ flex: 1 }}>
               <strong style={{ textDecoration: t.done ? 'line-through' : 'none', opacity: t.done ? 0.65 : 1 }}>
@@ -485,11 +354,7 @@ export function MessagesPage() {
                 {active.messages.map((m: any) => (
                   <div
                     key={m.id}
-                    style={{
-                      padding: '11px 14px',
-                      background: m.senderId === 'u-demo' ? 'var(--surface-copper)' : 'var(--surface-warm)',
-                      border: '1px solid var(--border)',
-                    }}
+                    className={`message-bubble${m.senderId === 'u-demo' ? ' message-bubble-self' : ''}`}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', marginBottom: 4 }}>
                       <strong>{m.senderName}</strong>
@@ -541,20 +406,12 @@ export function NotificationsPage() {
           </button>
         }
       />
-      <div className="panel" style={{ padding: 0 }}>
+      <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
         {items.map((n) => (
           <Link
             key={n.id}
             href={n.href}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: 12,
-              padding: '15px 20px',
-              borderBottom: '1px solid var(--border)',
-              background: n.read ? 'transparent' : 'var(--surface-copper)',
-              color: 'var(--ink)',
-            }}
+            className={`notification-row${n.read ? '' : ' unread'}`}
           >
             <strong>{n.title}</strong>
             <span style={{ color: 'var(--ink-muted)', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>{n.time}</span>
@@ -608,7 +465,7 @@ export function SavedItemsPage() {
       ) : (
         <div style={{ display: 'grid', gap: 12 }}>
           {data.discussions.map((d) => (
-            <div className="panel" key={d.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+            <div className="panel" key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
               <div>
                 <p className="eyebrow" style={{ marginBottom: 4 }}>
                   DISCUSSION
@@ -623,7 +480,7 @@ export function SavedItemsPage() {
             </div>
           ))}
           {data.blogs.map((b) => (
-            <div className="panel" key={b.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+            <div className="panel" key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
               <div>
                 <p className="eyebrow" style={{ marginBottom: 4 }}>
                   JOURNAL ESSAY
@@ -638,7 +495,7 @@ export function SavedItemsPage() {
             </div>
           ))}
           {data.jobs.map((j) => (
-            <div className="panel" key={j.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+            <div className="panel" key={j.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
               <div>
                 <p className="eyebrow" style={{ marginBottom: 4 }}>
                   OPEN ROLE
@@ -712,11 +569,11 @@ export function ProfileAndSettingsPage({ mode = 'profile' }: { mode?: 'profile' 
       />
 
       {mode === 'settings' && (
-        <div className="panel" style={{ marginBottom: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="panel" style={{ marginBottom: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
           <div>
             <strong>Appearance theme</strong>
             <div style={{ fontSize: '0.84rem', color: 'var(--ink-muted)' }}>
-              Currently using {theme === 'dark' ? 'Dark umber' : 'Warm linen'} palette.
+              Currently using {theme === 'dark' ? 'Deep Navy & Teal (Dark)' : 'Slate & Teal (Light)'} palette.
             </div>
           </div>
           <button type="button" className="button button-secondary" onClick={toggleTheme}>
@@ -732,7 +589,7 @@ export function ProfileAndSettingsPage({ mode = 'profile' }: { mode?: 'profile' 
           <div className="avatar avatar-large" style={{ margin: '0 auto 12px' }}>
             {user.avatarInitials}
           </div>
-          <h2 style={{ fontFamily: '"Fraunces", Georgia, serif', marginBottom: 4 }}>{user.name}</h2>
+          <h2 className="profile-card-name">{user.name}</h2>
           <p style={{ color: 'var(--ink-soft)', marginBottom: 6 }}>{user.title}</p>
           <span style={{ color: 'var(--ink-muted)', fontSize: '0.8rem' }}>
             {user.organization} · {user.location}
@@ -745,7 +602,7 @@ export function ProfileAndSettingsPage({ mode = 'profile' }: { mode?: 'profile' 
             <label htmlFor="prof-name">Full name</label>
             <input id="prof-name" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="form-grid-2">
             <div className="form-field">
               <label htmlFor="prof-title">Role / Title</label>
               <input id="prof-title" value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -820,14 +677,14 @@ export function SupportSurveysCredentialsPage({
             </div>
           </form>
         </div>
-        <div className="panel" style={{ padding: 0 }}>
+        <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
           {tickets.map((t) => (
-            <div key={t.id} style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
+            <div key={t.id} style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
               <div>
                 <strong>{t.subject}</strong>
                 <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>{t.message}</div>
               </div>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--terracotta)' }}>{t.status}</span>
+              <span className="support-status">{t.status}</span>
             </div>
           ))}
         </div>
@@ -894,82 +751,494 @@ export function SupportSurveysCredentialsPage({
   );
 }
 
+type SearchCategory =
+  | 'all'
+  | 'discussions'
+  | 'jobs'
+  | 'blogs'
+  | 'communities'
+  | 'courses'
+  | 'people';
+
+interface SearchDiscussion {
+  id: string;
+  kind: 'discussion' | 'question';
+  title: string;
+  communityName: string;
+  authorName: string;
+  commentCount: number;
+}
+
+interface SearchJob {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  workMode: string;
+}
+
+interface SearchBlog {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  authorName: string;
+  readingTime: string;
+}
+
+interface SearchCommunity {
+  id: string;
+  name: string;
+  category: string;
+  memberCount: number;
+  cadence: string;
+}
+
+interface SearchCourse {
+  id: string;
+  title: string;
+  category: string;
+  level: string;
+  duration: string;
+  instructor: string;
+}
+
+interface SearchPerson {
+  id: string;
+  name: string;
+  title: string;
+  organization: string;
+  location: string;
+  avatarInitials: string;
+}
+
+interface SearchResults {
+  discussions: SearchDiscussion[];
+  jobs: SearchJob[];
+  blogs: SearchBlog[];
+  communities: SearchCommunity[];
+  courses: SearchCourse[];
+  people: SearchPerson[];
+}
+
 export function SearchPage() {
-  const { search } = useRouter();
-  const q = new URLSearchParams(search).get('q') || '';
-  const [results, setResults] = useState<any | null>(null);
+  const { search, navigate } = useRouter();
+  const q = new URLSearchParams(search).get('q')?.trim() || '';
+  const [draftQuery, setDraftQuery] = useState(q);
+  const [inputHint, setInputHint] = useState('');
+  const [category, setCategory] = useState<SearchCategory>('all');
+  const [results, setResults] = useState<SearchResults | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [retryTick, setRetryTick] = useState(0);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setLoading(true);
-    api
-      .get(`/search?q=${encodeURIComponent(q)}`)
-      .then((res) => setResults(res))
-      .finally(() => setLoading(false));
+    setDraftQuery(q);
+    setInputHint('');
+    setCategory('all');
   }, [q]);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError('');
+    api
+      .get<Partial<SearchResults>>(`/search?q=${encodeURIComponent(q)}`)
+      .then((res) => {
+        if (!active) return;
+        setResults({
+          discussions: res.discussions || [],
+          jobs: res.jobs || [],
+          blogs: res.blogs || [],
+          communities: res.communities || [],
+          courses: res.courses || [],
+          people: res.people || [],
+        });
+      })
+      .catch((err) => {
+        if (!active) return;
+        setResults(null);
+        setError(err instanceof Error ? err.message : 'Unable to complete search. Please try again.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [q, retryTick]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = draftQuery.trim();
+    if (!trimmed) {
+      setInputHint('Enter a keyword to search across HR Shakti.');
+      searchInputRef.current?.focus();
+      return;
+    }
+    setInputHint('');
+    if (trimmed === q) {
+      if (error) setRetryTick((t) => t + 1);
+      return;
+    }
+    setCategory('all');
+    navigate(`/search?q=${encodeURIComponent(trimmed)}`);
+  };
+
+  const handleClearSearch = () => {
+    setDraftQuery('');
+    setInputHint('');
+    setCategory('all');
+    if (q) {
+      navigate('/search');
+    } else {
+      searchInputRef.current?.focus();
+    }
+  };
+
+  const counts = {
+    discussions: results?.discussions.length ?? 0,
+    jobs: results?.jobs.length ?? 0,
+    blogs: results?.blogs.length ?? 0,
+    communities: results?.communities.length ?? 0,
+    courses: results?.courses.length ?? 0,
+    people: results?.people.length ?? 0,
+  };
+  const totalCount =
+    counts.discussions +
+    counts.jobs +
+    counts.blogs +
+    counts.communities +
+    counts.courses +
+    counts.people;
+
+  const filterTabs: Array<{ id: SearchCategory; label: string; count: number }> = [
+    { id: 'all', label: 'All', count: totalCount },
+    { id: 'discussions', label: 'Discussions', count: counts.discussions },
+    { id: 'jobs', label: 'Jobs', count: counts.jobs },
+    { id: 'blogs', label: 'Blogs', count: counts.blogs },
+    { id: 'communities', label: 'Communities', count: counts.communities },
+    { id: 'courses', label: 'Courses', count: counts.courses },
+    { id: 'people', label: 'People', count: counts.people },
+  ];
+
+  const activeTab = filterTabs.find((tab) => tab.id === category) || filterTabs[0];
+  const hasCounts = !loading && !error && results !== null;
+
+  const showCategory = (id: Exclude<SearchCategory, 'all'>) =>
+    (category === 'all' || category === id) && (results?.[id]?.length ?? 0) > 0;
 
   return (
     <WorkspaceLayout>
       <PageHeader
         eyebrow="SEARCH"
         title={q ? `Results for “${q}”` : 'Explore HR Shakti'}
-        description="Matching conversations, journal essays, open roles, communities, courses, and members."
+        description="Search across discussions, open roles, journal essays, communities, courses, and members."
       />
+
+      <div className="panel search-page-panel">
+        <form className="search-page-form" role="search" onSubmit={handleSubmit}>
+          <div className="search-input-box">
+            <Search size={16} aria-hidden="true" />
+            <label htmlFor="search-page-input" className="sr-only">
+              Search HR Shakti
+            </label>
+            <input
+              ref={searchInputRef}
+              id="search-page-input"
+              type="search"
+              value={draftQuery}
+              onChange={(e) => {
+                setDraftQuery(e.target.value);
+                if (inputHint && e.target.value.trim()) setInputHint('');
+              }}
+              placeholder="Search discussions, jobs, essays, communities, courses, or people…"
+              aria-describedby={inputHint ? 'search-input-hint' : undefined}
+            />
+            {draftQuery && (
+              <button
+                type="button"
+                className="search-input-clear"
+                aria-label="Clear search input"
+                onClick={() => {
+                  setDraftQuery('');
+                  setInputHint('');
+                  searchInputRef.current?.focus();
+                }}
+              >
+                <X size={14} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          <div className="search-page-actions">
+            <button type="submit" className="button button-primary" disabled={loading}>
+              <Search size={15} aria-hidden="true" /> Search
+            </button>
+            {q && (
+              <button type="button" className="button button-secondary" onClick={handleClearSearch}>
+                Clear search
+              </button>
+            )}
+          </div>
+        </form>
+        {inputHint && (
+          <p id="search-input-hint" className="search-input-hint" role="status">
+            {inputHint}
+          </p>
+        )}
+
+        <div className="feed-toolbar search-toolbar">
+          <div className="feed-tabs search-tabs" role="tablist" aria-label="Filter results by category">
+            {filterTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={category === tab.id}
+                className={category === tab.id ? 'active' : ''}
+                onClick={() => setCategory(tab.id)}
+              >
+                <span>{tab.label}</span>
+                {hasCounts && <span className="search-tab-count">({tab.count})</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {loading ? (
-        <LoadingState label="Searching across HR Shakti…" />
+        <LoadingState label={q ? `Searching for “${q}”…` : 'Loading HR Shakti highlights…'} />
+      ) : error ? (
+        <div className="panel" role="alert">
+          <div className="notice notice-error" style={{ marginTop: 0 }}>
+            {error}
+          </div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="button button-primary"
+              onClick={() => setRetryTick((t) => t + 1)}
+            >
+              <RotateCcw size={15} aria-hidden="true" /> Try again
+            </button>
+            {q && (
+              <button type="button" className="button button-secondary" onClick={handleClearSearch}>
+                Clear search
+              </button>
+            )}
+          </div>
+        </div>
+      ) : totalCount === 0 ? (
+        <EmptyState
+          title={q ? `No matches found for “${q}”` : 'No search highlights available'}
+          description={
+            q
+              ? 'Try another keyword such as compensation, HRBP, onboarding, or clear your search to view featured items.'
+              : 'Enter a keyword above to search discussions, open roles, essays, communities, courses, and members.'
+          }
+          action={
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+              {q && (
+                <button type="button" className="button button-primary" onClick={handleClearSearch}>
+                  Clear search
+                </button>
+              )}
+              <button
+                type="button"
+                className="button button-secondary"
+                onClick={() => searchInputRef.current?.focus()}
+              >
+                Modify search
+              </button>
+            </div>
+          }
+        />
+      ) : category !== 'all' && activeTab.count === 0 ? (
+        <EmptyState
+          title={`No ${activeTab.label.toLowerCase()} matched${q ? ` “${q}”` : ''}`}
+          description={`There ${totalCount === 1 ? 'is 1 matching result' : `are ${totalCount} matching results`} across other categories.`}
+          action={
+            <button type="button" className="button button-primary" onClick={() => setCategory('all')}>
+              Show all categories ({totalCount})
+            </button>
+          }
+        />
       ) : (
-        <div style={{ display: 'grid', gap: 18 }}>
-          {results?.discussions?.length > 0 && (
-            <div className="panel">
-              <h2 style={{ marginBottom: 10 }}>Discussions ({results.discussions.length})</h2>
+        <div className="search-results-stack">
+          {showCategory('discussions') && results && (
+            <section className="panel" aria-labelledby="search-heading-discussions">
+              <div className="search-section-head">
+                <h2 id="search-heading-discussions">
+                  <MessageSquare size={17} aria-hidden="true" /> Discussions ({counts.discussions})
+                </h2>
+                <Link href="/discussions" className="search-section-link">
+                  Browse all <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+              </div>
               <div className="dashboard-records">
-                {results.discussions.map((d: any) => (
+                {results.discussions.map((d) => (
                   <Link key={d.id} href={`/discussions/${d.id}`}>
-                    <div>
+                    <div className="search-result-copy">
                       <strong>{d.title}</strong>
-                      <span>{d.communityName}</span>
+                      <span>
+                        {d.communityName} · {d.authorName}
+                      </span>
                     </div>
-                    <em>{d.commentCount} replies</em>
+                    <em className="search-result-action">
+                      {d.commentCount} {d.commentCount === 1 ? 'reply' : 'replies'}{' '}
+                      <ArrowRight size={13} aria-hidden="true" />
+                    </em>
                   </Link>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
-          {results?.jobs?.length > 0 && (
-            <div className="panel">
-              <h2 style={{ marginBottom: 10 }}>Open roles ({results.jobs.length})</h2>
+          {showCategory('jobs') && results && (
+            <section className="panel" aria-labelledby="search-heading-jobs">
+              <div className="search-section-head">
+                <h2 id="search-heading-jobs">
+                  <Briefcase size={17} aria-hidden="true" /> Jobs ({counts.jobs})
+                </h2>
+                <Link href="/jobs" className="search-section-link">
+                  Browse all <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+              </div>
               <div className="dashboard-records">
-                {results.jobs.map((j: any) => (
+                {results.jobs.map((j) => (
                   <Link key={j.id} href="/jobs">
-                    <div>
+                    <div className="search-result-copy">
                       <strong>{j.title}</strong>
                       <span>
                         {j.company} · {j.location}
                       </span>
                     </div>
-                    <em>{j.workMode}</em>
+                    <em className="search-result-action">
+                      {j.workMode} <ArrowRight size={13} aria-hidden="true" />
+                    </em>
                   </Link>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
-          {results?.blogs?.length > 0 && (
-            <div className="panel">
-              <h2 style={{ marginBottom: 10 }}>Journal essays ({results.blogs.length})</h2>
+          {showCategory('blogs') && results && (
+            <section className="panel" aria-labelledby="search-heading-blogs">
+              <div className="search-section-head">
+                <h2 id="search-heading-blogs">
+                  <FileText size={17} aria-hidden="true" /> Blogs ({counts.blogs})
+                </h2>
+                <Link href="/blogs" className="search-section-link">
+                  Browse all <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+              </div>
               <div className="dashboard-records">
-                {results.blogs.map((b: any) => (
+                {results.blogs.map((b) => (
                   <Link key={b.id} href={`/blogs/${b.slug}`}>
-                    <div>
+                    <div className="search-result-copy">
                       <strong>{b.title}</strong>
-                      <span>{b.authorName}</span>
+                      <span>
+                        {b.category} · {b.authorName}
+                      </span>
                     </div>
-                    <em>{b.readingTime}</em>
+                    <em className="search-result-action">
+                      {b.readingTime} <ArrowRight size={13} aria-hidden="true" />
+                    </em>
                   </Link>
                 ))}
               </div>
-            </div>
+            </section>
+          )}
+
+          {showCategory('communities') && results && (
+            <section className="panel" aria-labelledby="search-heading-communities">
+              <div className="search-section-head">
+                <h2 id="search-heading-communities">
+                  <Users size={17} aria-hidden="true" /> Communities ({counts.communities})
+                </h2>
+                <Link href="/communities" className="search-section-link">
+                  Browse all <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+              </div>
+              <div className="dashboard-records">
+                {results.communities.map((c) => (
+                  <Link key={c.id} href="/communities">
+                    <div className="search-result-copy">
+                      <strong>{c.name}</strong>
+                      <span>
+                        {c.category} · {c.cadence}
+                      </span>
+                    </div>
+                    <em className="search-result-action">
+                      {c.memberCount.toLocaleString()} members{' '}
+                      <ArrowRight size={13} aria-hidden="true" />
+                    </em>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {showCategory('courses') && results && (
+            <section className="panel" aria-labelledby="search-heading-courses">
+              <div className="search-section-head">
+                <h2 id="search-heading-courses">
+                  <BookOpen size={17} aria-hidden="true" /> Courses ({counts.courses})
+                </h2>
+                <Link href="/learning" className="search-section-link">
+                  Browse all <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+              </div>
+              <div className="dashboard-records">
+                {results.courses.map((course) => (
+                  <Link key={course.id} href="/learning">
+                    <div className="search-result-copy">
+                      <strong>{course.title}</strong>
+                      <span>
+                        {course.category} · Led by {course.instructor}
+                      </span>
+                    </div>
+                    <em className="search-result-action">
+                      {course.level} · {course.duration} <ArrowRight size={13} aria-hidden="true" />
+                    </em>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {showCategory('people') && results && (
+            <section className="panel" aria-labelledby="search-heading-people">
+              <div className="search-section-head">
+                <h2 id="search-heading-people">
+                  <Users size={17} aria-hidden="true" /> People ({counts.people})
+                </h2>
+                <Link href="/people" className="search-section-link">
+                  Browse all <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+              </div>
+              <div className="dashboard-records">
+                {results.people.map((person) => (
+                  <Link key={person.id} href="/people" className="search-person-row">
+                    <div className="search-person-identity">
+                      <span className="avatar" aria-hidden="true">
+                        {person.avatarInitials}
+                      </span>
+                      <div className="search-result-copy">
+                        <strong>{person.name}</strong>
+                        <span>
+                          {person.title} · {person.organization}
+                        </span>
+                      </div>
+                    </div>
+                    <em className="search-result-action">
+                      {person.location} <ArrowRight size={13} aria-hidden="true" />
+                    </em>
+                  </Link>
+                ))}
+              </div>
+            </section>
           )}
         </div>
       )}
